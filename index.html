@@ -16,21 +16,27 @@
         #timer { font-size: 60px; margin: 30px 0; }
         #phase { font-size: 24px; margin-top: 10px; color: #0f0; }
         #total { font-size: 20px; margin-top: 20px; opacity: 0.7; }
+        #countdown { font-size: 80px; color: #ff0; margin-top: 20px; }
     </style>
 </head>
 <body>
 
     <h1>Workout Timer</h1>
 
+    <audio id="beep">
+        <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+    </audio>
+
     <div id="exercise"></div>
     <div id="phase"></div>
     <div id="timer"></div>
+    <div id="countdown"></div>
     <div id="total"></div>
 
     <script>
         let exercises = [
+            "Liegestütz",
             "Kniebeugen",
-            "Liegestütze",
             "Plank",
             "Ausfallschritte",
             "Burpees",
@@ -42,17 +48,34 @@
         ];
 
         let current = 0;
-        let phase = "work"; // "work" = 40 Sek., "rest" = 20 Sek.
-        let timeLeft = 40;
+        let phase = "countdown"; // Start mit Countdown
+        let timeLeft = 3;
         let timerInterval;
 
+        const beep = document.getElementById("beep");
+
         function updateUI() {
+            if (phase === "countdown") {
+                document.getElementById("exercise").innerText = exercises[current];
+                document.getElementById("phase").innerText = "Bereit machen!";
+                document.getElementById("timer").innerText = "";
+                document.getElementById("countdown").innerText = timeLeft;
+                return;
+            }
+
+            document.getElementById("countdown").innerText = "";
+
             if (phase === "work") {
                 document.getElementById("exercise").innerText = exercises[current];
                 document.getElementById("phase").innerText = "40 Sekunden";
-            } else {
-                document.getElementById("exercise").innerText = "Pause";
-                document.getElementById("phase").innerText = "20 Sekunden";
+            } else if (phase === "rest") {
+                let next = current + 1;
+                if (next < exercises.length) {
+                    document.getElementById("exercise").innerText = exercises[next];
+                } else {
+                    document.getElementById("exercise").innerText = "FERTIG!";
+                }
+                document.getElementById("phase").innerText = "20 Sekunden Pause";
             }
 
             document.getElementById("timer").innerText = timeLeft;
@@ -64,32 +87,40 @@
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 timeLeft--;
-                document.getElementById("timer").innerText = timeLeft;
+
+                if (phase === "countdown") {
+                    document.getElementById("countdown").innerText = timeLeft;
+                } else {
+                    document.getElementById("timer").innerText = timeLeft;
+                }
 
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
+                    beep.play();
                     nextPhase();
                 }
             }, 1000);
         }
 
         function nextPhase() {
-            if (phase === "work") {
-                // Nach 40 Sekunden → Pause
+            if (phase === "countdown") {
+                phase = "work";
+                timeLeft = 40;
+            }
+            else if (phase === "work") {
                 phase = "rest";
                 timeLeft = 20;
-            } else {
-                // Pause vorbei → nächste Übung
+            }
+            else if (phase === "rest") {
                 current++;
                 if (current >= exercises.length) {
                     document.getElementById("exercise").innerText = "FERTIG!";
                     document.getElementById("phase").innerText = "";
                     document.getElementById("timer").innerText = "0";
-                    document.getElementById("total").innerText = "Alle Übungen abgeschlossen";
                     return;
                 }
-                phase = "work";
-                timeLeft = 40;
+                phase = "countdown";
+                timeLeft = 3;
             }
 
             updateUI();
