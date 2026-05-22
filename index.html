@@ -1,104 +1,106 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>bewegdeinarsch</title>
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        text-align: center;
-        background: #111;
-        color: #fff;
-        padding: 40px;
-    }
-    h1 {
-        font-size: 32px;
-        margin-bottom: 20px;
-    }
-    #timer {
-        font-size: 80px;
-        margin: 40px 0;
-    }
-    button {
-        font-size: 22px;
-        padding: 15px 30px;
-        margin: 10px;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-    }
-    #start { background: #28a745; color: white; }
-    #pause { background: #ffc107; color: black; }
-    #reset { background: #dc3545; color: white; }
-</style>
+    <meta charset="UTF-8">
+    <title>Workout Timer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: #fff;
+            text-align: center;
+            padding: 40px;
+        }
+        h1 {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+        #exercise {
+            font-size: 32px;
+            margin: 20px 0;
+        }
+        #timer {
+            font-size: 60px;
+            margin: 30px 0;
+        }
+        #total {
+            font-size: 20px;
+            margin-top: 20px;
+            opacity: 0.7;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 20px;
+            border: none;
+            border-radius: 10px;
+            background: #28a745;
+            color: white;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #1e7e34;
+        }
+    </style>
 </head>
 <body>
 
-<h1>bewegdeinarsch – Workout Timer</h1>
-<div id="status">Bereit</div>
-<div id="timer">40</div>
+    <h1>Workout Timer</h1>
 
-<button id="start">Start</button>
-<button id="pause">Pause</button>
-<button id="reset">Reset</button>
+    <div id="exercise">Übung: Kniebeugen</div>
 
-<script>
-let time = 40;
-let pauseTime = 20;
-let isPause = false;
-let interval;
+    <div id="timer">30</div>
 
-function updateDisplay() {
-    document.getElementById("timer").textContent = time;
-}
+    <button onclick="nextExercise()">Weiter zur nächsten Übung</button>
 
-function startTimer() {
-    if (interval) return;
+    <div id="total">Übung 1 von 5</div>
 
-    interval = setInterval(() => {
-        time--;
-        updateDisplay();
+    <script>
+        let exercises = [
+            "Kniebeugen",
+            "Liegestütze",
+            "Plank",
+            "Ausfallschritte",
+            "Burpees"
+        ];
 
-        if (time <= 0) {
-            clearInterval(interval);
-            interval = null;
+        let current = 0;
+        let timeLeft = 30;
+        let timerInterval;
 
-            if (!isPause) {
-                isPause = true;
-                time = pauseTime;
-                document.getElementById("status").textContent = "Pause!";
-                startTimer();
-            } else {
-                isPause = false;
-                time = 40;
-                document.getElementById("status").textContent = "Nächste Übung!";
-                startTimer();
-            }
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").innerText = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                }
+            }, 1000);
         }
-    }, 1000);
-}
 
-document.getElementById("start").onclick = () => {
-    document.getElementById("status").textContent = "Läuft…";
-    startTimer();
-};
+        function nextExercise() {
+            clearInterval(timerInterval);
 
-document.getElementById("pause").onclick = () => {
-    clearInterval(interval);
-    interval = null;
-    document.getElementById("status").textContent = "Pausiert";
-};
+            current++;
+            if (current >= exercises.length) {
+                document.getElementById("exercise").innerText = "FERTIG!";
+                document.getElementById("timer").innerText = "0";
+                document.getElementById("total").innerText = "Alle Übungen abgeschlossen";
+                return;
+            }
 
-document.getElementById("reset").onclick = () => {
-    clearInterval(interval);
-    interval = null;
-    isPause = false;
-    time = 40;
-    updateDisplay();
-    document.getElementById("status").textContent = "Bereit";
-};
-</script>
+            document.getElementById("exercise").innerText = "Übung: " + exercises[current];
+            document.getElementById("total").innerText = "Übung " + (current + 1) + " von " + exercises.length;
+
+            timeLeft = 30;
+            document.getElementById("timer").innerText = timeLeft;
+
+            startTimer();
+        }
+
+        startTimer();
+    </script>
 
 </body>
 </html>
