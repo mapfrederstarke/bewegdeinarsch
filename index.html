@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bewegdeinarsch</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background: #111;
+        color: #fff;
+        padding: 40px;
+    }
+    h1 {
+        font-size: 32px;
+        margin-bottom: 20px;
+    }
+    #timer {
+        font-size: 80px;
+        margin: 40px 0;
+    }
+    button {
+        font-size: 22px;
+        padding: 15px 30px;
+        margin: 10px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+    #start { background: #28a745; color: white; }
+    #pause { background: #ffc107; color: black; }
+    #reset { background: #dc3545; color: white; }
+</style>
+</head>
+<body>
+
+<h1>bewegdeinarsch – Workout Timer</h1>
+<div id="status">Bereit</div>
+<div id="timer">40</div>
+
+<button id="start">Start</button>
+<button id="pause">Pause</button>
+<button id="reset">Reset</button>
+
+<script>
+let time = 40;
+let pauseTime = 20;
+let isPause = false;
+let interval;
+
+function updateDisplay() {
+    document.getElementById("timer").textContent = time;
+}
+
+function startTimer() {
+    if (interval) return;
+
+    interval = setInterval(() => {
+        time--;
+        updateDisplay();
+
+        if (time <= 0) {
+            clearInterval(interval);
+            interval = null;
+
+            if (!isPause) {
+                isPause = true;
+                time = pauseTime;
+                document.getElementById("status").textContent = "Pause!";
+                startTimer();
+            } else {
+                isPause = false;
+                time = 40;
+                document.getElementById("status").textContent = "Nächste Übung!";
+                startTimer();
+            }
+        }
+    }, 1000);
+}
+
+document.getElementById("start").onclick = () => {
+    document.getElementById("status").textContent = "Läuft…";
+    startTimer();
+};
+
+document.getElementById("pause").onclick = () => {
+    clearInterval(interval);
+    interval = null;
+    document.getElementById("status").textContent = "Pausiert";
+};
+
+document.getElementById("reset").onclick = () => {
+    clearInterval(interval);
+    interval = null;
+    isPause = false;
+    time = 40;
+    updateDisplay();
+    document.getElementById("status").textContent = "Bereit";
+};
+</script>
+
+</body>
+</html>
