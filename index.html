@@ -9,128 +9,207 @@
             background: #111;
             color: #fff;
             text-align: center;
-            padding: 40px;
+            padding: 20px;
         }
-        h1 { font-size: 40px; margin-bottom: 20px; }
-        #exercise { font-size: 32px; margin: 20px 0; }
-        #timer { font-size: 60px; margin: 30px 0; }
-        #phase { font-size: 24px; margin-top: 10px; color: #0f0; }
-        #total { font-size: 20px; margin-top: 20px; opacity: 0.7; }
-        #countdown { font-size: 80px; color: #ff0; margin-top: 20px; }
+        h1 { font-size: 32px; margin-bottom: 10px; }
+        #exercise { font-size: 26px; margin: 10px 0; }
+        #phase { font-size: 20px; margin: 5px 0; color: #0f0; }
+        #timer { font-size: 52px; margin: 10px 0; }
+        #countdown { font-size: 64px; color: #ff0; margin: 10px 0; }
+        #total { font-size: 16px; margin-top: 10px; opacity: 0.7; }
+        #imageWrapper {
+            margin-top: 10px;
+        }
+        #exerciseImage {
+            max-width: 90vw;
+            max-height: 40vh;
+            border-radius: 8px;
+            background: #222;
+        }
     </style>
 </head>
 <body>
 
-    <h1>Workout Timer</h1>
+<h1>15-Minuten-Fatburn-Workout</h1>
 
-    <audio id="beep">
-        <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
-    </audio>
+<audio id="beep">
+    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+</audio>
 
-    <div id="exercise"></div>
-    <div id="phase"></div>
-    <div id="timer"></div>
-    <div id="countdown"></div>
-    <div id="total"></div>
+<div id="exercise"></div>
+<div id="phase"></div>
+<div id="timer"></div>
+<div id="countdown"></div>
+<div id="imageWrapper">
+    <img id="exerciseImage" src="" alt="Übung">
+</div>
+<div id="total"></div>
 
-    <script>
-        let exercises = [
-            "Liegestütz",
-            "Kniebeugen",
-            "Plank",
-            "Ausfallschritte",
-            "Burpees",
-            "Crunches",
-            "Mountain Climbers",
-            "Hampelmänner",
-            "Russian Twist",
-            "High Knees"
-        ];
+<script>
+    // Bildschirm anlassen (Wake Lock)
+    let wakeLock = null;
+    async function keepScreenOn() {
+        if ("wakeLock" in navigator) {
+            try {
+                wakeLock = await navigator.wakeLock.request("screen");
+            } catch (err) {
+                console.log("Wake Lock Fehler:", err);
+            }
+        }
+    }
+    document.addEventListener("visibilitychange", () => {
+        if (wakeLock !== null && document.visibilityState === "visible") {
+            keepScreenOn();
+        }
+    });
+    keepScreenOn();
 
-        let current = 0;
-        let phase = "countdown"; // Start mit Countdown
-        let timeLeft = 3;
-        let timerInterval;
+    // 15 Übungen
+    const exercises = [
+        "Burpees",
+        "Mountain Climbers",
+        "Jumping Jacks",
+        "High Knees",
+        "Squat Jumps",
+        "Plank to Push-Up",
+        "Lunges",
+        "Dips",
+        "Bicycle Crunches",
+        "Skater Jumps",
+        "Liegestütz",
+        "Plank",
+        "Russian Twist",
+        "Side Lunges",
+        "Kniebeugen"
+    ];
 
-        const beep = document.getElementById("beep");
+    // Zu jeder Übung ein GIF – HIER trägst du später echte Links ein
+    const exerciseImages = {
+        "Burpees": "https://example.com/burpees.gif",
+        "Mountain Climbers": "https://example.com/mountain_climbers.gif",
+        "Jumping Jacks": "https://example.com/jumping_jacks.gif",
+        "High Knees": "https://example.com/high_knees.gif",
+        "Squat Jumps": "https://example.com/squat_jumps.gif",
+        "Plank to Push-Up": "https://example.com/plank_to_pushup.gif",
+        "Lunges": "https://example.com/lunges.gif",
+        "Dips": "https://example.com/dips.gif",
+        "Bicycle Crunches": "https://example.com/bicycle_crunches.gif",
+        "Skater Jumps": "https://example.com/skater_jumps.gif",
+        "Liegestütz": "https://example.com/pushups.gif",
+        "Plank": "https://example.com/plank.gif",
+        "Russian Twist": "https://example.com/russian_twist.gif",
+        "Side Lunges": "https://example.com/side_lunges.gif",
+        "Kniebeugen": "https://example.com/squats.gif"
+    };
 
-        function updateUI() {
+    let current = 0;
+    let phase = "countdown"; // countdown | work | rest
+    let timeLeft = 3;
+    let timerInterval;
+
+    const beep = document.getElementById("beep");
+    const exerciseEl = document.getElementById("exercise");
+    const phaseEl = document.getElementById("phase");
+    const timerEl = document.getElementById("timer");
+    const countdownEl = document.getElementById("countdown");
+    const totalEl = document.getElementById("total");
+    const imgEl = document.getElementById("exerciseImage");
+
+    function setImageFor(name) {
+        const src = exerciseImages[name];
+        if (src) {
+            imgEl.src = src;
+            imgEl.style.display = "block";
+        } else {
+            imgEl.style.display = "none";
+        }
+    }
+
+    function updateUI() {
+        if (phase === "countdown") {
+            const name = exercises[current];
+            exerciseEl.innerText = name;
+            phaseEl.innerText = "Bereit machen!";
+            timerEl.innerText = "";
+            countdownEl.innerText = timeLeft;
+            setImageFor(name);
+            totalEl.innerText = "Übung " + (current + 1) + " von " + exercises.length;
+            return;
+        }
+
+        countdownEl.innerText = "";
+
+        if (phase === "work") {
+            const name = exercises[current];
+            exerciseEl.innerText = name;
+            phaseEl.innerText = "40 Sekunden";
+            setImageFor(name);
+        } else if (phase === "rest") {
+            const next = current + 1;
+            if (next < exercises.length) {
+                const nextName = exercises[next];
+                exerciseEl.innerText = nextName;
+                setImageFor(nextName);
+            } else {
+                exerciseEl.innerText = "FERTIG!";
+                imgEl.style.display = "none";
+            }
+            phaseEl.innerText = "20 Sekunden Pause";
+        }
+
+        timerEl.innerText = timeLeft;
+        totalEl.innerText = "Übung " + (current + 1) + " von " + exercises.length;
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+
             if (phase === "countdown") {
-                document.getElementById("exercise").innerText = exercises[current];
-                document.getElementById("phase").innerText = "Bereit machen!";
-                document.getElementById("timer").innerText = "";
-                document.getElementById("countdown").innerText = timeLeft;
+                countdownEl.innerText = timeLeft;
+            } else {
+                timerEl.innerText = timeLeft;
+            }
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                beep.play();
+                nextPhase();
+            }
+        }, 1000);
+    }
+
+    function nextPhase() {
+        if (phase === "countdown") {
+            phase = "work";
+            timeLeft = 40;
+        } else if (phase === "work") {
+            phase = "rest";
+            timeLeft = 20;
+        } else if (phase === "rest") {
+            current++;
+            if (current >= exercises.length) {
+                exerciseEl.innerText = "FERTIG!";
+                phaseEl.innerText = "";
+                timerEl.innerText = "0";
+                countdownEl.innerText = "";
+                imgEl.style.display = "none";
+                totalEl.innerText = "Workout abgeschlossen";
                 return;
             }
-
-            document.getElementById("countdown").innerText = "";
-
-            if (phase === "work") {
-                document.getElementById("exercise").innerText = exercises[current];
-                document.getElementById("phase").innerText = "40 Sekunden";
-            } else if (phase === "rest") {
-                let next = current + 1;
-                if (next < exercises.length) {
-                    document.getElementById("exercise").innerText = exercises[next];
-                } else {
-                    document.getElementById("exercise").innerText = "FERTIG!";
-                }
-                document.getElementById("phase").innerText = "20 Sekunden Pause";
-            }
-
-            document.getElementById("timer").innerText = timeLeft;
-            document.getElementById("total").innerText =
-                "Übung " + (current + 1) + " von " + exercises.length;
+            phase = "countdown";
+            timeLeft = 3;
         }
 
-        function startTimer() {
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                timeLeft--;
-
-                if (phase === "countdown") {
-                    document.getElementById("countdown").innerText = timeLeft;
-                } else {
-                    document.getElementById("timer").innerText = timeLeft;
-                }
-
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    beep.play();
-                    nextPhase();
-                }
-            }, 1000);
-        }
-
-        function nextPhase() {
-            if (phase === "countdown") {
-                phase = "work";
-                timeLeft = 40;
-            }
-            else if (phase === "work") {
-                phase = "rest";
-                timeLeft = 20;
-            }
-            else if (phase === "rest") {
-                current++;
-                if (current >= exercises.length) {
-                    document.getElementById("exercise").innerText = "FERTIG!";
-                    document.getElementById("phase").innerText = "";
-                    document.getElementById("timer").innerText = "0";
-                    return;
-                }
-                phase = "countdown";
-                timeLeft = 3;
-            }
-
-            updateUI();
-            startTimer();
-        }
-
-        // Start
         updateUI();
         startTimer();
-    </script>
+    }
+
+    // Start
+    updateUI();
+    startTimer();
+</script>
 
 </body>
 </html>
